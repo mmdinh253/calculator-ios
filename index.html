@@ -1,52 +1,55 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculator - Tutorial</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="calculator">
-            <form>
-                <div class="display">
-                    <input type="text" name="display" value="0">
-                </div>
-                <div>
-                    <input type="button" value="⌫" onclick="backspace()" class="top-operator">
-                    <input type="button" value="AC" onclick="clearAll()" class="top-operator">
-                    <input type="button" value="%" onclick="percent()" class="top-operator">
-                    <input type="button" value="÷" onclick="appendOperator('/')" class="operator">
-                </div>
-                <div>
-                    <input type="button" value="7" onclick="appendNumber('7')">
-                    <input type="button" value="8" onclick="appendNumber('8')">
-                    <input type="button" value="9" onclick="appendNumber('9')">
-                    <input type="button" value="×" onclick="appendOperator('*')" class="operator">
-                </div>
-                <div>
-                    <input type="button" value="4" onclick="appendNumber('4') ">
-                    <input type="button" value="5" onclick="appendNumber('5') ">
-                    <input type="button" value="6" onclick="appendNumber('6') ">
-                    <input type="button" value="-" onclick="appendOperator('-') " class="operator">
-                </div>
-                <div>
-                    <input type="button" value="1" onclick="appendNumber('1') ">
-                    <input type="button" value="2" onclick="appendNumber('2') ">
-                    <input type="button" value="3" onclick="appendNumber('3') ">
-                    <input type="button" value="+" onclick="appendOperator('+') " class="operator">
-                </div>
-                <div>
-                    <input type="button" value="+/-" onclick="toggleSign()">
-                    <input type="button" value="0" onclick="appendNumber('0')">
-                    <input type="button" value="." onclick="appendNumber('.')" class="operator">
-                    <input type="button" value="=" onclick="display.value = eval(display.value)" class="operator">
-                </div>
-            </form>
-        </div>
+<div class="container">
+    <div class="calculator">
+        <form>
+            <!-- Display -->
+            <div class="display">
+                <input type="text" name="display" value="0" readonly>
+            </div>
+
+            <!-- Top operators row -->
+            <input type="button" value="⌫" onclick="backspace()" class="top-operator">
+            <input type="button" id="clearBtn" value="AC" onclick="clearAll()" class="top-operator">
+            <input type="button" value="%" onclick="percent()" class="top-operator">
+            <input type="button" value="÷" onclick="appendOperator('/')" class="operator">
+
+            <!-- Number and operator rows -->
+            <input type="button" value="7" onclick="appendNumber('7')">
+            <input type="button" value="8" onclick="appendNumber('8')">
+            <input type="button" value="9" onclick="appendNumber('9')">
+            <input type="button" value="×" onclick="appendOperator('*')" class="operator">
+
+            <input type="button" value="4" onclick="appendNumber('4')">
+            <input type="button" value="5" onclick="appendNumber('5')">
+            <input type="button" value="6" onclick="appendNumber('6')">
+            <input type="button" value="-" onclick="appendOperator('-')" class="operator">
+
+            <input type="button" value="1" onclick="appendNumber('1')">
+            <input type="button" value="2" onclick="appendNumber('2')">
+            <input type="button" value="3" onclick="appendNumber('3')">
+            <input type="button" value="+" onclick="appendOperator('+')" class="operator">
+
+            <!-- Bottom row -->
+            <input type="button" value="+/-" onclick="toggleSign()">
+            <input type="button" value="0" onclick="appendNumber('0')">
+            <input type="button" value="." onclick="appendNumber('.')">
+            <input type="button" value="=" onclick="calculate()" class="operator equal">
+        </form>
     </div>
+</div>
+
 <script>
     const display = document.forms[0].display;
+    const clearBtn = document.getElementById("clearBtn");
+    let hasInput = false;
 
     function appendNumber(num) {
         if (display.value === "0") {
@@ -54,15 +57,31 @@
         } else {
             display.value += num;
         }
+        setClearToC();
     }
 
     function appendOperator(op) {
-        display.value += op;
+        const lastChar = display.value.slice(-1);
+        if ("+-*/".includes(lastChar)) {
+            display.value = display.value.slice(0, -1) + op; // replace last operator
+        } else {
+            display.value += op;
+        }
+        setClearToC();
+    }
+
+    function setClearToC() {
+        if (!hasInput) {
+            clearBtn.value = "C";
+            hasInput = true;
+        }
     }
 
     function backspace() {
         if (display.value.length <= 1) {
             display.value = "0";
+            clearBtn.value = "AC";
+            hasInput = false;
         } else {
             display.value = display.value.slice(0, -1);
         }
@@ -70,6 +89,8 @@
 
     function clearAll() {
         display.value = "0";
+        clearBtn.value = "AC";
+        hasInput = false;
     }
 
     function getLastNumber() {
@@ -78,13 +99,12 @@
     }
 
     function replaceLastNumber(newNum) {
-        display.value = display.value.replace(/(-?\d+\.?\d*)$/);
+        display.value = display.value.replace(/(-?\d+\.?\d*)$/, newNum);
     }
 
     function toggleSign() {
         const lastNum = getLastNumber();
         if (!lastNum) return;
-
         const toggled = (-parseFloat(lastNum)).toString();
         replaceLastNumber(toggled);
     }
@@ -92,15 +112,21 @@
     function percent() {
         const lastNum = getLastNumber();
         if (!lastNum) return;
-
         const parts = display.value.split(/[\+\-\*\/]/);
-        let base = parts.length > 1
-            ? parseFloat(parts[parts.length - 2])
-            : 1;
-        
+        let base = parts.length > 1 ? parseFloat(parts[parts.length - 2]) : 1;
         const percentValue = (parseFloat(lastNum) / 100) * base;
         replaceLastNumber(percentValue.toString());
     }
-</script> 
+
+    function calculate() {
+        try {
+            display.value = eval(display.value).toString();
+        } catch {
+            display.value = "Error";
+        }
+        clearBtn.value = "AC";
+        hasInput = false;
+    }
+</script>
 </body>
 </html>
